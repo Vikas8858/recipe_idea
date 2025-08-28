@@ -1,128 +1,166 @@
 
-
 import React, { useEffect, useState } from 'react';
-import Header from './Component/Header';
 
+// App.jsx
 export default function App() {
-  const [ingredient, setIngredient] = useState('');
+  const [ingredient, setIngredient] = useState('chicken');
   const [meals, setMeals] = useState([]);
-  const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const [selectedMeal, setSelectedMeal] = useState(null);
+  const [queryTimeout, setQueryTimeout] = useState(null);
 
-  async function searchMeals() {
-    if (!ingredient.trim()) return;
-    try {
-      setLoading(true);
-      setError('');
+  // Fetch by ingredient
+  async function fetchMealsByIngredient(q) {
+    if (!q) {
       setMeals([]);
-      setSelected(null);
-      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${ingredient}`);
-      if (!res.ok) throw new Error('Network error');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(q)}`);
       const data = await res.json();
       setMeals(data.meals || []);
-      if (!data.meals) setError('No recipes found');
     } catch (e) {
-      setError(e.message);
+      setError('Network error — try again');
+      setMeals([]);
     } finally {
       setLoading(false);
     }
   }
 
-  async function loadDetails(id) {
+  // Fetch full meal details
+  async function fetchMealDetails(id) {
+    setLoading(true);
     try {
-      setLoading(true);
-      setError('');
       const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
-      if (!res.ok) throw new Error('Network error');
       const data = await res.json();
-      setSelected(data.meals[0]);
+      setSelectedMeal(data.meals ? data.meals[0] : null);
     } catch (e) {
-      setError(e.message);
+      setError('Could not load recipe details');
     } finally {
       setLoading(false);
     }
   }
+
+  // Debounced search as user types
+  useEffect(() => {
+    if (queryTimeout) clearTimeout(queryTimeout);
+    const t = setTimeout(() => {
+      fetchMealsByIngredient(ingredient.trim());
+    }, 450);
+    setQueryTimeout(t);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ingredient]);
+
+  // initial load
+  useEffect(() => { fetchMealsByIngredient(ingredient); }, []);
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100">
-     <Header/>
-
-      <main className="mx-auto max-w-5xl px-4 py-6 space-y-6">
-        {/* Search */}
-          <div className="flex flex-col gap-3 sm:flex-row">
-          <input
-            value={ingredient}
-            onChange={(e) => setIngredient(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && searchMeals()}
-            placeholder="Enter an ingredient (e.g., chicken, tomato)"
-            className="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-          />
-          <button
-            onClick={searchMeals}
-            className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium hover:bg-emerald-500"
-          >
-            Search
-          </button>
-        </div>
-
-        {loading && <div className="text-center text-slate-400">Loading…</div>}
-        {error && <div className="text-center text-red-400">{error}</div>}
-
-        {/* Results Grid */}
-        {!loading && !selected && meals && meals.length > 0 && (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {meals.map((meal) => (
-              <div
-                key={meal.idMeal}
-                className="cursor-pointer overflow-hidden rounded-2xl border border-slate-700 bg-slate-800 hover:ring-2 hover:ring-emerald-400"
-                onClick={() => loadDetails(meal.idMeal)}
-              >
-                <img src={meal.strMealThumb} alt={meal.strMeal} className="h-32 w-full object-cover" />
-                <div className="p-2 text-sm font-medium">{meal.strMeal}</div>
-              </div>
-            ))}
+    <div className="min-h-screen p-6 text-gray-900 bg-gradient-to-b from-white to-gray-100">
+      <div className="max-w-4xl mx-auto ">
+        <header className="flex flex-col items-start justify-between gap-4 mb-6 sm:flex-row sm:items-center">
+          <div>
+            <h1 className="text-3xl font-extrabold">Recipe Ideas — Taylor</h1>
+            <p className="text-sm text-gray-600">Quick dinner ideas based on what you have in the fridge.</p>
           </div>
-        )}
+          <div className="w-full sm:w-60">
+            <label className="block mb-1 text-xs font-medium">Search by ingredient</label>
+            <input
+              value={ingredient}
+              onChange={(e) => setIngredient(e.target.value)}
+              placeholder="e.g. chicken, tomato, rice"
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            />
+          </div>
+        </header>
 
-        {/* Details View */}
-        {selected && (
-          <div className="space-y-4">
-            <button
-              onClick={() => setSelected(null)}
-              className="rounded-md bg-slate-700 px-3 py-1 text-sm hover:bg-slate-600"
-            >
-              ← Back
-            </button>
-            <div className="rounded-2xl border border-slate-700 bg-slate-800 p-4">
-              <h2 className="text-xl font-semibold">{selected.strMeal}</h2>
-              <img
-                src={selected.strMealThumb}
-                alt={selected.strMeal}
-                className="mt-3 w-full max-w-md rounded-xl object-cover"
-              />
-              <p className="mt-3 text-sm text-slate-300">{selected.strInstructions}</p>
-              <h3 className="mt-4 font-medium">Ingredients:</h3>
-              <ul className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                {Array.from({ length: 20 }, (_, i) => i + 1)
-                  .map((i) => {
-                    const ing = selected[`strIngredient${i}`];
-                    const measure = selected[`strMeasure${i}`];
-                    return ing && ing.trim() ? (
-                      <li key={i} className="rounded bg-slate-700/40 px-2 py-1">
-                        {ing} {measure}
-                      </li>
-                    ) : null;
-                  })}
-              </ul>
+        <main>
+          <section className="mb-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Results</h2>
+              <div className="text-sm text-gray-600">{loading ? 'Loading…' : `${meals.length} recipes`}</div>
             </div>
-          </div>
-        )}
-      </main>
+          </section>
 
-      <footer className="mt-10 border-t border-slate-800 py-6 text-center text-xs text-slate-500">
-        Data from TheMealDB • Built with React + Tailwind
-      </footer>
+          {error && (
+            <div className="p-3 mb-4 text-red-700 border border-red-200 rounded bg-red-50">{error}</div>
+          )}
+
+          <section>
+            {meals.length === 0 && !loading ? (
+              <div className="p-6 text-center text-gray-600 border rounded">No recipes found. Try another ingredient.</div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {meals.map((meal) => (
+                  <article key={meal.idMeal} className="p-3 transition bg-white rounded-lg shadow-sm hover:shadow-md">
+                    <img src={meal.strMealThumb} alt={meal.strMeal} className="object-cover w-full h-40 rounded" />
+                    <div className="mt-3">
+                      <h3 className="font-semibold">{meal.strMeal}</h3>
+                      <div className="flex items-center justify-between mt-2">
+                        <button
+                          onClick={() => fetchMealDetails(meal.idMeal)}
+                          className="px-3 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700"
+                        >
+                          View recipe
+                        </button>
+                        <button
+                          onClick={() => navigator.clipboard?.writeText(meal.strMeal)}
+                          className="text-sm text-gray-500 hover:text-gray-700"
+                        >
+                          Copy name
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Modal / details */}
+          {selectedMeal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className="absolute inset-0 bg-black/50" onClick={() => setSelectedMeal(null)} />
+              <div className="relative z-10 max-w-3xl w-full bg-white rounded-lg overflow-auto max-h-[90vh] p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <h3 className="text-2xl font-bold">{selectedMeal.strMeal}</h3>
+                  <button onClick={() => setSelectedMeal(null)} className="text-gray-500">Close</button>
+                </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <img src={selectedMeal.strMealThumb} alt="thumb" className="w-full rounded md:col-span-1" />
+                  <div className="md:col-span-2">
+                    <p className="mb-3 text-sm text-gray-600">Category: {selectedMeal.strCategory} • Cuisine: {selectedMeal.strArea}</p>
+                    <h4 className="mb-2 font-semibold">Ingredients</h4>
+                    <ul className="grid grid-cols-2 gap-1 mb-4 text-sm">
+                      {Array.from({ length: 20 }).map((_, i) => {
+                        const ing = selectedMeal[`strIngredient${i + 1}`];
+                        const measure = selectedMeal[`strMeasure${i + 1}`];
+                        return ing ? <li key={i} className="text-sm">{measure} {ing}</li> : null;
+                      })}
+                    </ul>
+
+                    <h4 className="mb-2 font-semibold">Instructions</h4>
+                    <p className="text-sm whitespace-pre-line">{selectedMeal.strInstructions}</p>
+
+                    {selectedMeal.strSource && (
+                      <p className="mt-3 text-sm">Source: <a href={selectedMeal.strSource} target="_blank" rel="noreferrer" className="text-indigo-600">Open</a></p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+
+        <footer className="mt-8 text-xs text-center text-gray-500">
+          Built for the Take-Home UI challenge — uses TheMealDB public API.
+        </footer>
+      </div>
     </div>
   );
 }
+
+

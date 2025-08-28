@@ -12,104 +12,32 @@ Currently, two official plugins are available:
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
 
 
+/*
+README (notes for setup & deployment)
 
-/*   
+1) Tech stack
+   - React (Vite or Create React App)
+   - Tailwind CSS for styling (utility classes used in component)
+   - TheMealDB public API (no API key required)
 
-# Recipe Ideas – React + Tailwind
+2) How to run locally (Vite example)
+   - npm create vite@latest recipe-ideas -- --template react
+   - cd recipe-ideas
+   - npm install
+   - Install Tailwind: follow Tailwind + Vite setup: https://tailwindcss.com/docs/guides/vite
+   - Replace src/App.jsx with the provided App component content.
+   - npm run dev
 
-A responsive web app built for the **Take-Home UI Challenge**. It allows users to search for recipes by ingredient using the free **TheMealDB API**.
+3) Deploy
+   - Push to GitHub and deploy to CodeSandbox, StackBlitz or Vercel/Netlify.
 
----
+4) Features implemented
+   - Search by ingredient (debounced)
+   - Grid of meal cards with thumbnails
+   - View full recipe details (modal) using lookup endpoint
+   - Error handling and empty states
+   - Responsive layout
 
-## 🚀 Features
-
-* Search recipes by ingredient (e.g., *chicken*, *tomato*, *rice*).
-* Responsive grid of recipe cards with image + name.
-* Click a recipe to view details (instructions + ingredients).
-* Loading spinner, error messages, and empty state handling.
-* Clean, mobile-first design with **Tailwind CSS**.
-
----
-
-## 🛠️ Tech Stack
-
-* **React (Vite)** – framework
-* **Tailwind CSS** – styling
-* **TheMealDB API** – data source (no API key required)
-
----
-
-## 📦 Getting Started
-
-### 1. Clone repo & install
-
-```bash
-npm create vite@latest recipe-ideas -- --template react
-cd recipe-ideas
-npm install
-```
-
-### 2. Install Tailwind CSS
-
-```bash
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-```
-
-Update `tailwind.config.js`:
-
-```js
-export default {
-  content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
-  theme: { extend: {} },
-  plugins: [],
-}
-```
-
-In `src/index.css` add:
-
-```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-```
-
-### 3. Replace App code
-
-Copy the code from `App.jsx` provided in this repo/canvas into your project.
-
-### 4. Run locally
-
-```bash
-npm run dev
-```
-
-Visit [http://localhost:5173](http://localhost:5173).
-
----
-
-
-
-## 📖 API Reference
-
-* [TheMealDB API](https://www.themealdb.com/api.php)
-
-  * Search by ingredient: `https://www.themealdb.com/api/json/v1/1/filter.php?i={ingredient}`
-  * Lookup by ID: `https://www.themealdb.com/api/json/v1/1/lookup.php?i={id}`
-
----
-
-## 📌 Notes
-
-* This project was built for the UI Take-Home Challenge.
-* No authentication or API keys required.
-* Mobile-first design ensures it works on all devices.
-
----
-
-## 👨‍💻 Author
-
-Built with ❤️ using React + Tailwind.
-
-
+5) Possible improvements
+   - Add filters (category, area), save favorites (localStorage), add shopping list export, add time-to-cook estimate, unit conversion.
 */
